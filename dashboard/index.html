@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Empathy Band — Caregiver Dashboard</title>
+<style>
+  :root {
+    --bg: #0b1020;
+    --panel: #141a2e;
+    --panel-2: #1b2340;
+    --line: #263056;
+    --text: #e6ecff;
+    --muted: #8b96b8;
+    --calm: #2f9cf4;
+    --anxious: #f5a623;
+    --distress: #ef4444;
+    --gsr: #22d3ee;
+    --sound: #a78bfa;
+    --motion: #94a3b8;
+    --hrv: #34d399;
+    --radius: 16px;
+    --shadow: 0 12px 32px rgba(0,0,0,.35);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: radial-gradient(1200px 700px at 20% -10%, #16204a 0%, var(--bg) 55%);
+    color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: 20px;
+  }
+  .wrap { max-width: 1240px; margin: 0 auto; }
+
+  header.topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap; margin-bottom: 20px;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .logo {
+    width: 42px; height: 42px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--gsr), var(--sound));
+    box-shadow: 0 0 24px rgba(34,211,238,.4);
+  }
+  .brand h1 { font-size: 18px; margin: 0; letter-spacing: .3px; }
+  .brand p { margin: 0; color: var(--muted); font-size: 12px; }
+  .controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+  button {
+    background: var(--panel-2); color: var(--text); border: 1px solid var(--line);
+    padding: 9px 14px; border-radius: 10px; font-size: 13px; cursor: pointer;
+    transition: .15s; font-weight: 600;
+  }
+  button:hover { border-color: #3a4a86; background: #222c52; }
+  button.active { background: linear-gradient(135deg,#1d6fd6,#2f9cf4); border-color: transparent; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--panel); border: 1px solid var(--line);
+    padding: 8px 12px; border-radius: 999px; font-size: 12px; color: var(--muted);
+  }
+  .pill .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+  .pill.live .dot { background: var(--hrv); box-shadow: 0 0 10px var(--hrv); }
+  .pill.serial .dot { background: var(--calm); box-shadow: 0 0 10px var(--calm); }
+
+  .grid { display: grid; gap: 16px; }
+  .panel {
+    background: linear-gradient(180deg, var(--panel), #10162b);
+    border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 16px; box-shadow: var(--shadow);
+  }
+  .panel h2 { margin: 0 0 12px; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+
+  .hero { display: grid; grid-template-columns: 320px 1fr; gap: 16px; margin-bottom: 16px; }
+  .state-card { display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+  .state-card::before {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(circle at 50% 50%, var(--glow, transparent), transparent 70%);
+    opacity: .35; transition: .4s;
+  }
+  .state-core { position: relative; text-align: center; }
+  .state-badge {
+    font-size: 30px; font-weight: 800; letter-spacing: 2px;
+    padding: 18px 34px; border-radius: 18px;
+    border: 2px solid var(--state, var(--muted));
+    color: var(--state, var(--text));
+    box-shadow: 0 0 40px -6px var(--state, transparent);
+    transition: .3s;
+  }
+  .state-core p { margin: 12px 0 0; color: var(--muted); font-size: 13px; }
+  .pulse { animation: pulse 1.6s infinite; }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--state) 55%, transparent); }
+    70% { box-shadow: 0 0 0 18px color-mix(in srgb, var(--state) 0%, transparent); }
+    100% { box-shadow: 0 0 0 0 transparent; }
+  }
+  .hero-side { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .big-stat { text-align: center; display: flex; flex-direction: column; justify-content: center; }
+  .big-stat .k { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+  .big-stat .v { font-size: 30px; font-weight: 700; margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .big-stat .u { font-size: 12px; color: var(--muted); }
+
+  .metrics { grid-template-columns: repeat(4, 1fr); margin-bottom: 16px; }
+  .metric .m-top { display: flex; justify-content: space-between; align-items: baseline; }
+  .metric .m-name { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .metric .m-val { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .bar { position: relative; height: 8px; border-radius: 6px; background: #0c1226; margin-top: 12px; overflow: hidden; }
+  .bar > .fill { position: absolute; inset: 0 auto 0 0; width: 0%; border-radius: 6px; transition: width .15s linear, background .3s; }
+  .bar > .mark { position: absolute; top: -3px; bottom: -3px; width: 2px; background: rgba(255,255,255,.5); }
+  .metric .tagline { margin-top: 8px; font-size: 12px; color: var(--muted); }
+
+  .row2 { grid-template-columns: 1.6fr 1fr; margin-bottom: 16px; }
+  .row3 { grid-template-columns: 1fr 1fr; }
+
+  .chart-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .legend { display: flex; gap: 14px; font-size: 11px; color: var(--muted); }
+  .legend i { display: inline-block; width: 12px; height: 3px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+  canvas { width: 100%; height: 240px; display: block; }
+
+  .cond { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; background: #0e1430; margin-bottom: 8px; border: 1px solid transparent; }
+  .cond.on { border-color: color-mix(in srgb, var(--distress) 50%, transparent); background: color-mix(in srgb, var(--distress) 12%, #0e1430); }
+  .cond .tick { width: 20px; height: 20px; border-radius: 6px; background: #1c2548; display: grid; place-items: center; font-size: 12px; color: var(--muted); }
+  .cond.on .tick { background: var(--distress); color: #fff; }
+  .cond .c-name { flex: 1; font-size: 13px; }
+  .cond .c-name small { display: block; color: var(--muted); font-size: 11px; }
+  .score { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 13px; }
+  .gate { font-weight: 700; }
+  .gate.still { color: var(--hrv); }
+  .gate.moving { color: var(--anxious); }
+
+  ul.log { list-style: none; margin: 0; padding: 0; max-height: 220px; overflow-y: auto; }
+  ul.log li { display: flex; gap: 10px; padding: 8px 6px; border-bottom: 1px solid #1a2242; font-size: 13px; align-items: center; }
+  ul.log li:last-child { border-bottom: none; }
+  ul.log .t { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; min-width: 62px; }
+  ul.log .b { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+
+  .summary { display: grid; gap: 12px; }
+  .stack { display: flex; height: 14px; border-radius: 8px; overflow: hidden; background: #0c1226; }
+  .stack > div { height: 100%; transition: width .3s; }
+  .legend2 { display: flex; gap: 16px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
+  .legend2 span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend2 i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  .kpis { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+  .kpi { background: #0e1430; border-radius: 10px; padding: 12px; text-align: center; }
+  .kpi .n { font-size: 22px; font-weight: 700; }
+  .kpi .l { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin-top: 4px; }
+
+  footer { text-align: center; color: var(--muted); font-size: 12px; margin: 24px 0 8px; }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 8px; }
+
+  @media (max-width: 980px) {
+    .hero { grid-template-columns: 1fr; }
+    .hero-side { grid-template-columns: repeat(3,1fr); }
+    .metrics { grid-template-columns: repeat(2,1fr); }
+    .row2, .row3 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 560px) {
+    .hero-side { grid-template-columns: 1fr 1fr; }
+    .metrics { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo"></div>
+      <div>
+        <h1>Empathy Band</h1>
+        <p>Caregiver Dashboard — live comfort state monitor</p>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="pill" id="connPill"><span class="dot"></span><span id="connText">Demo data</span></div>
+      <button id="btnDemo" class="active">Demo</button>
+      <button id="btnSerial">Connect serial</button>
+      <button id="btnPause">Pause</button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="panel state-card" id="stateCard">
+      <div class="state-core">
+        <div class="state-badge" id="stateBadge">CALM</div>
+        <p id="stateSub">Monitoring · no distress detected</p>
+      </div>
+    </div>
+    <div class="hero-side">
+      <div class="panel big-stat">
+        <div class="k">Session time</div>
+        <div class="v" id="sessionTime">00:00</div>
+        <div class="u" id="sessionNote">demo</div>
+      </div>
+      <div class="panel big-stat">
+        <div class="k">Heart rate</div>
+        <div class="v" id="bpmVal">—</div>
+        <div class="u">beats / min</div>
+      </div>
+      <div class="panel big-stat">
+        <div class="k">HRV (RMSSD)</div>
+        <div class="v" id="hrvVal">—</div>
+        <div class="u">ms · lower = stress</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid metrics">
+    <div class="panel metric" id="m-gsr">
+      <div class="m-top"><span class="m-name">GSR level</span><span class="m-val">0.00</span></div>
+      <div class="bar"><div class="fill" style="background:var(--gsr)"></div><div class="mark"></div></div>
+      <div class="tagline">skin conductance · sweat response</div>
+    </div>
+    <div class="panel metric" id="m-slope">
+      <div class="m-top"><span class="m-name">GSR slope</span><span class="m-val">0.00</span></div>
+      <div class="bar"><div class="fill" style="background:var(--gsr)"></div><div class="mark"></div></div>
+      <div class="tagline">rate of arousal (per second)</div>
+    </div>
+    <div class="panel metric" id="m-sound">
+      <div class="m-top"><span class="m-name">Sound level</span><span class="m-val">0.00</span></div>
+      <div class="bar"><div class="fill" style="background:var(--sound)"></div><div class="mark"></div></div>
+      <div class="tagline" id="soundTag">vocalisation / ambient noise</div>
+    </div>
+    <div class="panel metric" id="m-motion">
+      <div class="m-top"><span class="m-name">Motion</span><span class="m-val">0.00</span></div>
+      <div class="bar"><div class="fill" style="background:var(--motion)"></div><div class="mark"></div></div>
+      <div class="tagline" id="motionTag">IMU magnitude · gates DISTRESS</div>
+    </div>
+  </section>
+
+  <section class="grid row2">
+    <div class="panel">
+      <div class="chart-head">
+        <h2>Signal timeline</h2>
+        <div class="legend">
+          <span><i style="background:var(--gsr)"></i>GSR</span>
+          <span><i style="background:var(--sound)"></i>Sound</span>
+          <span><i style="background:var(--motion)"></i>Motion</span>
+          <span><i style="background:var(--hrv)"></i>HRV/100</span>
+        </div>
+      </div>
+      <canvas id="chart"></canvas>
+      <div class="hint">State bands below the axis: <span style="color:var(--calm)">calm</span> · <span style="color:var(--anxious)">anxious</span> · <span style="color:var(--distress)">distress</span></div>
+    </div>
+
+    <div class="panel">
+      <h2>Classification breakdown</h2>
+      <div id="conditions"></div>
+      <div class="score">
+        <span>Points → 3 needed for DISTRESS</span>
+        <strong id="pointScore">0 / 4</strong>
+      </div>
+      <div class="score">
+        <span>Motion gate</span>
+        <span class="gate still" id="gateTag">STILL</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid row3">
+    <div class="panel">
+      <h2>Caregiver event log</h2>
+      <ul class="log" id="eventLog"></ul>
+    </div>
+    <div class="panel">
+      <h2>Session summary</h2>
+      <div class="summary">
+        <div class="stack" id="stateStack">
+          <div style="background:var(--calm)"></div>
+          <div style="background:var(--anxious)"></div>
+          <div style="background:var(--distress)"></div>
+        </div>
+        <div class="legend2">
+          <span><i style="background:var(--calm)"></i>Calm <b id="pctCalm">0%</b></span>
+          <span><i style="background:var(--anxious)"></i>Anxious <b id="pctAnxious">0%</b></span>
+          <span><i style="background:var(--distress)"></i>Distress <b id="pctDistress">0%</b></span>
+        </div>
+        <div class="kpis">
+          <div class="kpi"><div class="n" id="kpiEpisodes">0</div><div class="l">Distress episodes</div></div>
+          <div class="kpi"><div class="n" id="kpiAlerts">0</div><div class="l">Alerts fired</div></div>
+          <div class="kpi"><div class="n" id="kpiMarks">0</div><div class="l">Caregiver marks</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>Prototype — not a medical device. Thresholds are untuned heuristics.</footer>
+</div>
+
+<script>
+const CFG = {
+  GSR_LEVEL: 0.55,
+  GSR_SLOPE: 0.08,
+  RMSSD_LOW: 30,
+  SOUND: 0.50,
+  SOUND_SUSTAIN_MS: 1000,
+  MOTION_STILL: 0.12,
+  DISTRESS_MIN: 3,
+  ALERT_DELAY_MS: 2500
+};
+
+const COLORS = { CALM: '#2f9cf4', ANXIOUS: '#f5a623', DISTRESS: '#ef4444' };
+
+const els = {
+  stateCard: document.getElementById('stateCard'),
+  stateBadge: document.getElementById('stateBadge'),
+  stateSub: document.getElementById('stateSub'),
+  sessionTime: document.getElementById('sessionTime'),
+  sessionNote: document.getElementById('sessionNote'),
+  bpmVal: document.getElementById('bpmVal'),
+  hrvVal: document.getElementById('hrvVal'),
+  conditions: document.getElementById('conditions'),
+  pointScore: document.getElementById('pointScore'),
+  gateTag: document.getElementById('gateTag'),
+  eventLog: document.getElementById('eventLog'),
+  stateStack: document.getElementById('stateStack'),
+  pctCalm: document.getElementById('pctCalm'),
+  pctAnxious: document.getElementById('pctAnxious'),
+  pctDistress: document.getElementById('pctDistress'),
+  kpiEpisodes: document.getElementById('kpiEpisodes'),
+  kpiAlerts: document.getElementById('kpiAlerts'),
+  kpiMarks: document.getElementById('kpiMarks'),
+  connPill: document.getElementById('connPill'),
+  connText: document.getElementById('connText'),
+  btnDemo: document.getElementById('btnDemo'),
+  btnSerial: document.getElementById('btnSerial'),
+  btnPause: document.getElementById('btnPause'),
+  soundTag: document.getElementById('soundTag'),
+  motionTag: document.getElementById('motionTag'),
+  chart: document.getElementById('chart')
+};
+
+const CONDITION_DEFS = [
+  { key: 'gsrLevel', name: 'GSR level elevated', sub: 'above normalised threshold' },
+  { key: 'gsrSlope', name: 'GSR rising fast', sub: 'sudden arousal' },
+  { key: 'hrvLow',   name: 'HRV low', sub: 'sympathetic activation' },
+  { key: 'sound',    name: 'Sound sustained', sub: 'moaning / crying / agitation' }
+];
+
+const state = {
+  mode: 'demo',
+  paused: false,
+  sessionMs: 0,
+  timeIn: { CALM: 0, ANXIOUS: 0, DISTRESS: 0 },
+  episodes: 0,
+  alerts: 0,
+  marks: 0,
+  lastReported: 'CALM',
+  distressSince: null,
+  alertFired: false,
+  soundAboveMs: 0,
+  samples: [],
+  inputs: { gsrLevel: 0, gsrSlope: 0, soundLevel: 0, motionMagnitude: 0, bpm: 0, rmssdMs: 0, beatValid: false, soundSustained: false },
+  prevGsr: 0
+};
+
+function classify(inp) {
+  const cond = {
+    gsrLevel: inp.gsrLevel >= CFG.GSR_LEVEL,
+    gsrSlope: inp.gsrSlope >= CFG.GSR_SLOPE,
+    hrvLow: inp.beatValid && inp.rmssdMs < CFG.RMSSD_LOW,
+    sound: inp.soundSustained
+  };
+  const points = Object.values(cond).filter(Boolean).length;
+  const moving = inp.motionMagnitude >= CFG.MOTION_STILL;
+  let s = 'CALM';
+  if (points >= CFG.DISTRESS_MIN && !moving) s = 'DISTRESS';
+  else if (points >= 1) s = 'ANXIOUS';
+  return { state: s, points, cond, moving };
+}
+
+function clock(ms) {
+  const total = Math.floor(ms / 1000);
+  const m = String(Math.floor(total / 60)).padStart(2, '0');
+  const s = String(total % 60).padStart(2, '0');
+  return `${m}:${s}`;
+}
+
+function addEvent(type, text, tMs) {
+  const colors = { CALM: COLORS.CALM, ANXIOUS: COLORS.ANXIOUS, DISTRESS: COLORS.DISTRESS, MARK: '#facc15' };
+  const li = document.createElement('li');
+  li.innerHTML = `<span class="t">${clock(tMs)}</span><span class="b" style="background:${colors[type] || '#8b96b8'}"></span><span>${text}</span>`;
+  els.eventLog.prepend(li);
+  while (els.eventLog.children.length > 60) els.eventLog.lastChild.remove();
+}
+
+function ensureConditionsRendered() {
+  if (els.conditions.childElementCount) return;
+  CONDITION_DEFS.forEach((d) => {
+    const row = document.createElement('div');
+    row.className = 'cond';
+    row.dataset.key = d.key;
+    row.innerHTML = `<span class="tick">✓</span><span class="c-name">${d.name}<small>${d.sub}</small></span>`;
+    els.conditions.appendChild(row);
+  });
+}
+
+function fmt(v, d) { return (v == null || !isFinite(v)) ? '—' : v.toFixed(d); }
+
+function tick(dtMs, inp, opts) {
+  state.inputs = inp;
+  state.sessionMs += dtMs;
+
+  if (inp.soundLevel >= CFG.SOUND) state.soundAboveMs += dtMs;
+  else state.soundAboveMs = 0;
+  inp.soundSustained = state.soundAboveMs >= CFG.SOUND_SUSTAIN_MS;
+
+  const res = classify(inp);
+  const s = (opts && opts.reported) ? opts.reported : res.state;
+
+  if (s !== state.lastReported) {
+    state.timeIn[state.lastReported] += 0;
+    addEvent(s, `State → ${s}`, state.sessionMs);
+    if (s === 'DISTRESS' && state.lastReported !== 'DISTRESS') state.episodes++;
+    state.lastReported = s;
+  }
+  state.timeIn[s] += dtMs;
+
+  if (s === 'DISTRESS') {
+    if (state.distressSince == null) { state.distressSince = state.sessionMs; state.alertFired = false; }
+    else if (!state.alertFired && state.sessionMs - state.distressSince >= CFG.ALERT_DELAY_MS) {
+      state.alertFired = true;
+      state.alerts++;
+      addEvent('DISTRESS', 'Alert fired (buzzer + vibration)', state.sessionMs);
+    }
+  } else {
+    state.distressSince = null;
+    state.alertFired = false;
+  }
+
+  state.samples.push({
+    gsr: inp.gsrLevel, sound: inp.soundLevel, motion: inp.motionMagnitude,
+    hrv: inp.beatValid ? Math.min(1, inp.rmssdMs / 100) : 0, state: s
+  });
+  if (state.samples.length > 400) state.samples.shift();
+
+  renderState(s, res);
+  renderMetrics(inp, res);
+  renderSummary();
+}
+
+function renderState(s, res) {
+  els.stateCard.style.setProperty('--glow', COLORS[s]);
+  els.stateCard.style.setProperty('--state', COLORS[s]);
+  els.stateBadge.textContent = s;
+  els.stateBadge.classList.toggle('pulse', s !== 'CALM');
+  els.stateBadge.style.setProperty('--state', COLORS[s]);
+  const subs = {
+    CALM: 'Monitoring · baseline stable',
+    ANXIOUS: 'Elevated arousal · watch closely',
+    DISTRESS: 'Sustained distress · caregiver alerted'
+  };
+  els.stateSub.textContent = subs[s] || '';
+  els.sessionTime.textContent = clock(state.sessionMs);
+  els.bpmVal.textContent = state.inputs.bpm ? Math.round(state.inputs.bpm) : '—';
+  els.hrvVal.textContent = state.inputs.beatValid ? Math.round(state.inputs.rmssdMs) : '—';
+
+  ensureConditionsRendered();
+  [...els.conditions.children].forEach((row) => {
+    row.classList.toggle('on', !!res.cond[row.dataset.key]);
+  });
+  els.pointScore.textContent = `${res.points} / 4`;
+  els.gateTag.textContent = res.moving ? 'MOVING' : 'STILL';
+  els.gateTag.className = 'gate ' + (res.moving ? 'moving' : 'still');
+}
+
+function setBar(id, ratio, text, color) {
+  const card = document.getElementById(id);
+  const pct = Math.max(0, Math.min(100, ratio * 100));
+  card.querySelector('.fill').style.width = pct + '%';
+  card.querySelector('.fill').style.background = color || '';
+  card.querySelector('.m-val').textContent = text;
+}
+
+function renderMetrics(inp, res) {
+  setBar('m-gsr', inp.gsrLevel, fmt(inp.gsrLevel, 2));
+  const slopeRatio = Math.max(0, Math.min(1, inp.gsrSlope / 0.3));
+  setBar('m-slope', slopeRatio, fmt(inp.gsrSlope, 2));
+  setBar('m-sound', inp.soundLevel, fmt(inp.soundLevel, 2));
+  setBar('m-motion', Math.min(1, inp.motionMagnitude / 0.5), fmt(inp.motionMagnitude, 2));
+  els.soundTag.textContent = inp.soundSustained ? 'sustained — counts as a point' : 'vocalisation / ambient noise';
+  els.motionTag.textContent = res.moving ? 'moving — DISTRESS suppressed' : 'still — DISTRESS allowed';
+}
+
+function renderSummary() {
+  const total = state.timeIn.CALM + state.timeIn.ANXIOUS + state.timeIn.DISTRESS || 1;
+  const pc = state.timeIn.CALM / total * 100;
+  const pa = state.timeIn.ANXIOUS / total * 100;
+  const pd = state.timeIn.DISTRESS / total * 100;
+  const bars = els.stateStack.children;
+  bars[0].style.width = pc + '%';
+  bars[1].style.width = pa + '%';
+  bars[2].style.width = pd + '%';
+  els.pctCalm.textContent = Math.round(pc) + '%';
+  els.pctAnxious.textContent = Math.round(pa) + '%';
+  els.pctDistress.textContent = Math.round(pd) + '%';
+  els.kpiEpisodes.textContent = state.episodes;
+  els.kpiAlerts.textContent = state.alerts;
+  els.kpiMarks.textContent = state.marks;
+}
+
+const ctx = els.chart.getContext('2d');
+function resizeChart() {
+  const dpr = window.devicePixelRatio || 1;
+  const w = els.chart.clientWidth, h = els.chart.clientHeight;
+  els.chart.width = w * dpr;
+  els.chart.height = h * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+function drawChart() {
+  const w = els.chart.clientWidth, h = els.chart.clientHeight;
+  ctx.clearRect(0, 0, w, h);
+  const pad = 8;
+  const bandH = 10;
+  const plotH = h - bandH - pad * 2;
+
+  ctx.strokeStyle = 'rgba(255,255,255,.06)';
+  ctx.lineWidth = 1;
+  for (let i = 1; i < 4; i++) {
+    const y = pad + plotH * i / 4;
+    ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(w - pad, y); ctx.stroke();
+  }
+
+  const data = state.samples;
+  if (data.length < 2) return;
+  const stepX = (w - pad * 2) / (data.length - 1);
+
+  const series = [
+    { key: 'gsr', color: '#22d3ee' },
+    { key: 'sound', color: '#a78bfa' },
+    { key: 'motion', color: '#94a3b8' },
+    { key: 'hrv', color: '#34d399' }
+  ];
+  series.forEach((se) => {
+    ctx.beginPath();
+    data.forEach((d, i) => {
+      const x = pad + i * stepX;
+      const y = pad + plotH * (1 - Math.max(0, Math.min(1, d[se.key])));
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    });
+    ctx.strokeStyle = se.color;
+    ctx.lineWidth = 1.8;
+    ctx.stroke();
+  });
+
+  const bandY = pad + plotH + 8;
+  data.forEach((d, i) => {
+    ctx.fillStyle = COLORS[d.state] || '#8b96b8';
+    ctx.globalAlpha = 0.7;
+    ctx.fillRect(pad + i * stepX, bandY, Math.max(1, stepX), bandH);
+  });
+  ctx.globalAlpha = 1;
+}
+
+function loop() {
+  drawChart();
+  requestAnimationFrame(loop);
+}
+
+/* ---------- Demo data source ---------- */
+const sim = { t: 0, stress: 0, nextEvent: 6000, eventEnd: 0, soundBurstUntil: 0, motionUntil: 0, noise: {} };
+function smoothNoise(key, t, speed) {
+  if (sim.noise[key] == null) sim.noise[key] = Math.random() * 100;
+  sim.noise[key] += speed;
+  return Math.sin(sim.noise[key]) * 0.5 + Math.sin(sim.noise[key] * 2.3 + 1.7) * 0.3;
+}
+function demoStep(dtMs) {
+  sim.t += dtMs;
+  if (sim.t > sim.nextEvent) {
+    sim.eventEnd = sim.t + (6000 + Math.random() * 9000);
+    sim.nextEvent = sim.eventEnd + 12000 + Math.random() * 20000;
+    if (Math.random() < 0.55) sim.soundBurstUntil = sim.t + 2500 + Math.random() * 2500;
+  }
+  const inEvent = sim.t < sim.eventEnd;
+  sim.stress += ((inEvent ? 1 : 0) - sim.stress) * Math.min(1, dtMs / 1500);
+
+  let motion = Math.abs(smoothNoise('m', sim.t, 0.006)) * 0.06;
+  if (sim.t < sim.motionUntil) motion += Math.random() * 0.4;
+  else if (Math.random() < 0.01) sim.motionUntil = sim.t + 800 + Math.random() * 1800;
+
+  const gsr = Math.max(0, Math.min(1, 0.22 + 0.55 * sim.stress + Math.abs(smoothNoise('g', sim.t, 0.004)) * 0.12));
+  const slope = Math.max(-0.1, (gsr - state.prevGsr) / (dtMs / 1000));
+  state.prevGsr = gsr;
+
+  let sound = Math.max(0, Math.abs(smoothNoise('s', sim.t, 0.02)) * 0.35);
+  if (sim.t < sim.soundBurstUntil) sound = 0.55 + Math.random() * 0.3;
+
+  const bpm = 68 + 26 * sim.stress + smoothNoise('h', sim.t, 0.01) * 5;
+  const rmssd = Math.max(8, 48 - 30 * sim.stress + smoothNoise('r', sim.t, 0.013) * 6);
+
+  tick(dtMs, {
+    gsrLevel: gsr, gsrSlope: slope, soundLevel: sound, motionMagnitude: motion,
+    bpm, rmssdMs: rmssd, beatValid: true, soundSustained: false
+  });
+}
+
+/* ---------- Serial data source ---------- */
+let serialPort = null;
+let serialActive = false;
+const lineRe = /state=(\w+)\s+gsr=([-\d.]+)\s+slope=([-\d.]+)\s+sound=([-\d.]+)\(([\d.]+)s\)\s+mot=([-\d.]+)\s+bpm=([\d.]+)\s+rmssd=([-\d.]+)/;
+
+function handleSerialLine(line) {
+  if (line.includes('caregiver event mark')) {
+    state.marks++;
+    addEvent('MARK', 'Caregiver event mark', state.sessionMs);
+    renderSummary();
+    return;
+  }
+  const m = lineRe.exec(line);
+  if (!m) return;
+  const inp = {
+    gsrLevel: parseFloat(m[2]),
+    gsrSlope: parseFloat(m[3]),
+    soundLevel: parseFloat(m[4]),
+    motionMagnitude: parseFloat(m[6]),
+    bpm: parseFloat(m[7]),
+    rmssdMs: parseFloat(m[8]),
+    beatValid: true,
+    soundSustained: false
+  };
+  tick(100, inp, { reported: m[1] });
+}
+
+async function connectSerial() {
+  if (!('serial' in navigator)) {
+    alert('Web Serial is not supported in this browser. Use Chrome or Edge on desktop.');
+    return;
+  }
+  if (serialActive) { await disconnectSerial(); return; }
+  try {
+    serialPort = await navigator.serial.requestPort();
+    await serialPort.open({ baudRate: 115200 });
+    serialActive = true;
+    state.mode = 'serial';
+    els.connPill.classList.add('serial');
+    els.connText.textContent = 'Serial connected';
+    els.btnSerial.textContent = 'Disconnect';
+    els.btnDemo.classList.remove('active');
+    els.sessionNote.textContent = 'live serial';
+
+    const decoder = new TextDecoderStream();
+    serialPort.readable.pipeTo(decoder.writable);
+    const reader = decoder.readable.getReader();
+    let buf = '';
+    while (serialActive) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += value;
+      let idx;
+      while ((idx = buf.indexOf('\n')) >= 0) {
+        const line = buf.slice(0, idx).trim();
+        buf = buf.slice(idx + 1);
+        if (line) handleSerialLine(line);
+      }
+    }
+  } catch (err) {
+    console.error(err);
+    els.connPill.classList.remove('serial');
+    els.connText.textContent = 'Serial error';
+    serialActive = false;
+  }
+}
+
+async function disconnectSerial() {
+  serialActive = false;
+  if (serialPort) {
+    try { await serialPort.close(); } catch (e) {}
+    serialPort = null;
+  }
+  state.mode = 'demo';
+  els.connText.textContent = 'Demo data';
+  els.connPill.classList.remove('serial');
+  els.btnSerial.textContent = 'Connect serial';
+  els.btnDemo.classList.add('active');
+  els.sessionNote.textContent = 'demo';
+}
+
+/* ---------- Controls ---------- */
+els.btnDemo.addEventListener('click', async () => {
+  if (serialActive) await disconnectSerial();
+  state.mode = 'demo';
+  els.connPill.classList.remove('serial');
+  els.connText.textContent = 'Demo data';
+  els.btnDemo.classList.add('active');
+  els.sessionNote.textContent = 'demo';
+});
+els.btnSerial.addEventListener('click', connectSerial);
+els.btnPause.addEventListener('click', () => {
+  state.paused = !state.paused;
+  els.btnPause.textContent = state.paused ? 'Resume' : 'Pause';
+  els.btnPause.classList.toggle('active', state.paused);
+});
+
+/* ---------- Main loop ---------- */
+let last = performance.now();
+setInterval(() => {
+  const now = performance.now();
+  const dt = Math.min(250, now - last);
+  last = now;
+  if (!state.paused && state.mode === 'demo') demoStep(dt);
+}, 100);
+
+ensureConditionsRendered();
+resizeChart();
+addEvent('CALM', 'Session started', 0);
+window.addEventListener('resize', resizeChart);
+loop();
+</script>
+</body>
+</html>

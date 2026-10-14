@@ -1,0 +1,19 @@
+idf_component_register(
+    SRCS
+        "main.c"
+        "classify.c"
+        "i2c_bus.c"
+        "sensors/gsr.c"
+        "sensors/sound.c"
+        "sensors/mpu6050.c"
+        "sensors/max30102.c"
+        "sensors/button.c"
+        "act/actuators.c"
+    INCLUDE_DIRS
+        "."
+        "sensors"
+        "act"
+    PRIV_REQUIRES
+        driver
+        esp_timer
+)
