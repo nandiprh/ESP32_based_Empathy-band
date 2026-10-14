@@ -322,3 +322,126 @@ Everything else in this document (full wiring) still applies when you build the 
 system.
 
 
+
+## 14. Per-sensor ASCII block diagram
+
+### 14.1 ESP32 DevKit breakout (reference)
+```
+                ┌─────────────────────────────────────────┐
+                │ ESP32 DevKit (Arduino IDE)               │
+                │ 3V3  | GND | GPIO21(SDA) | GPIO22(SCL)    │
+                │ GPIO34| GPIO35| GPIO4     | GPIO25(R)     │
+                │ GPIO26(G)| GPIO27(B)| GPIO32(MOT)| GPIO33(BUZ)│
+                └─────────────────────────────────────────┘
+                         ▲      ▲
+                         │      └───────────── rails 3V3 / GND
+                         │
+                      bus taps
+```
+
+### 14.2 MPU6050 (GY-521)
+```
+┌─────────────┐
+│ MPU6050      │        ┌─────────────┐
+│ VCC→3V3      │────────┤ + rail       │
+│ GND→GND      │────────┤ − rail       │
+│ SDA→GPIO21   │────────┤ ESP32        │
+│ SCL→GPIO22   │────────┤ ESP32        │
+└─────────────┘
+```
+
+### 14.3 MAX30102
+```
+┌─────────────┐
+│ MAX30102     │        ┌─────────────┐
+│ VIN→3V3      │────────┤ + rail       │
+│ GND→GND      │────────┤ − rail       │
+│ SDA→GPIO21   │────────┤ ESP32        │
+│ SCL→GPIO22   │────────┤ ESP32        │
+└─────────────┘
+```
+
+### 14.4 GSR module
+```
+┌─────────────┐
+│ GSR          │        ┌─────────────┐
+│ VCC→3V3      │────────┤ + rail       │
+│ GND→GND      │────────┤ − rail       │
+│ SIG→GPIO34   │────────┤ ESP32        │
+└─────────────┘
+  ├─ electrode A (finger)
+  └─ electrode B (finger, same hand)
+```
+
+### 14.5 LM393 Sound module (analog only)
+```
+┌─────────────┐
+│ LM393        │        ┌─────────────┐
+│ VCC→3V3      │────────┤ + rail       │
+│ GND→GND      │────────┤ − rail       │
+│ AOUT→GPIO35  │────────┤ ESP32        │
+│ DOUT         │        (leave open)
+└─────────────┘
+```
+
+### 14.6 Push button
+```
+┌─────────────┐
+│ Tactile      │        ┌─────────────┐
+│ leg A→GPIO4  │────────┤ ESP32        │
+│ leg B→GND    │────────┤ − rail       │
+└─────────────┘
+(diagonals of the 4-pin button)
+```
+
+### 14.7 Buzzer (active)
+```
+┌─────────────┐
+│ Buzzer       │        ┌─────────────┐
+│ VCC→3V3      │────────┤ + rail       │
+│ GND→GND      │────────┤ − rail       │
+│ I/O→GPIO33   │────────┤ ESP32        │
+└─────────────┘
+```
+
+### 14.8 Vibration motor (driver: 2N2222 + 1N4001 + 1kΩ)
+```
+                    3V3 (+ rail)
+                      │
+                ┌─────┴─────┐
+                │ 1N4001     │  (stripe toward 3V3 / +)
+                │ flyback    │
+                └─────┬─────┘
+                      │
+                   Motor (+)
+                      │
+                   Motor (−)
+                      │
+                ┌─────┴─────┐
+                │ 2N2222 C  │
+                └─────┬─────┘
+                      │
+                ┌─────┴─────┐
+                │ 2N2222 E  │──────── GND (− rail)
+                └───────────┘
+                      │
+                ┌─────┴─────┐
+                │ 1kΩ       │
+                └─────┬─────┘
+                      │
+                   GPIO32 (ESP32)
+```
+
+### 14.9 RGB LED (HW-478, common-cathode B,R,G,-)
+```
+┌─────────────┐
+│ HW-478       │        ┌─────────────┐
+│ R→GPIO25     │────────┤ ESP32        │
+│ G→GPIO26     │────────┤ ESP32        │
+│ B→GPIO27     │────────┤ ESP32        │
+│ -→GND        │────────┤ − rail       │
+└─────────────┘
+```
+
+### 14.10 Minimal build only (empathy_band_min)
+Use only: GSR (14.4), MAX30102 (14.3), Buzzer (14.7), RGB (14.9). No sound, MPU6050, button, motor.
