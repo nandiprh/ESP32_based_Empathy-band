@@ -123,7 +123,7 @@ void loop()
 {
     uint32_t now = millis();
 
-    if (now - s_lastSensorMs >= SENSOR_PERIOD_MS) {
+    if (now - s_lastSensorMs >= SENSOR_PERIOD_MS]) {
         s_lastSensorMs = now;
         sensorStep();
     }

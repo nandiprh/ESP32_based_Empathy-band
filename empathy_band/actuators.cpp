@@ -39,6 +39,11 @@ static void pwmWrite(int pin, int channel, uint8_t duty)
 
 static void showColour(uint8_t r, uint8_t g, uint8_t b)
 {
+#if RGB_COMMON_ANODE
+    r = 255 - r;
+    g = 255 - g;
+    b = 255 - b;
+#endif
     pwmWrite(PIN_RGB_R, CH_R, r);
     pwmWrite(PIN_RGB_G, CH_G, g);
     pwmWrite(PIN_RGB_B, CH_B, b);

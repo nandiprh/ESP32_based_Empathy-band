@@ -1,0 +1,4 @@
+[wokwi]
+version = 1
+firmware = "../empathy_band/empathy_band.ino.hex"
+elf = "../empathy_band/empathy_band.ino.elf"

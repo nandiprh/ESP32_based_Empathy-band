@@ -281,3 +281,24 @@ either sketch over **Web Serial** or as a standalone demo.
 
 State colours and PWM setup live in `actuators.cpp`; the decision rules live in
 `classify.cpp`.
+
+
+## 8. Frontend Options
+
+### 8.1 Web Dashboard (dashboard/index.html)
+Original HTML/JS dashboard with Web Serial support for live monitoring.
+
+### 8.2 Python Streamlit Dashboard (python_dashboard/)
+New Python-based dashboard with enhanced visualizations:
+- Real-time plotting using Plotly
+- Serial communication via pyserial
+- Demo mode for testing
+- Session statistics and event logging
+- Run with: `streamlit run python_dashboard/app.py`
+
+### 8.3 Wokwi Simulation (wokwi/)
+Online simulation environment:
+- Visit [wokwi.com](https://wokwi.com) and import the project
+- Use `diagram.json` for circuit layout
+- Simulate sensors with potentiometers
+- Monitor serial output in browser

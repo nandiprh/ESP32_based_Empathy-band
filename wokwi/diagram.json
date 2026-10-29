@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "author": "Empathy Band",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    { "type": "wokwi-resistor", "id": "r1", "top": 50, "left": 200, "attrs": { "value": "1000" } },
+    { "type": "wokwi-led", "id": "led_r", "top": 90, "left": 250, "attrs": { "color": "red" } },
+    { "type": "wokwi-led", "id": "led_g", "top": 90, "left": 280, "attrs": { "color": "green" } },
+    { "type": "wokwi-led", "id": "led_b", "top": 90, "left": 310, "attrs": { "color": "blue" } },
+    { "type": "wokwi-buzzer", "id": "bz1", "top": 150, "left": 200, "attrs": { "mode": "active" } },
+    { "type": "wokwi-pushbutton", "id": "btn1", "top": 200, "left": 200, "attrs": { "color": "grey" } },
+    { "type": "wokwi-potentiometer", "id": "pot_gsr", "top": 30, "left": -150, "attrs": {} },
+    { "type": "wokwi-potentiometer", "id": "pot_sound", "top": 100, "left": -150, "attrs": {} }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "led_r:A", "esp:25", "red", [] ],
+    [ "led_r:C", "esp:GND.1", "black", [] ],
+    [ "led_g:A", "esp:26", "green", [] ],
+    [ "led_g:C", "esp:GND.1", "black", [] ],
+    [ "led_b:A", "esp:27", "blue", [] ],
+    [ "led_b:C", "esp:GND.1", "black", [] ],
+    [ "bz1:1", "esp:33", "red", [] ],
+    [ "bz1:2", "esp:GND.1", "black", [] ],
+    [ "btn1:1.l", "esp:4", "green", [] ],
+    [ "btn1:2.l", "esp:GND.1", "black", [] ],
+    [ "pot_gsr:GND", "esp:GND.2", "black", [] ],
+    [ "pot_gsr:VCC", "esp:3V3", "red", [] ],
+    [ "pot_gsr:SIG", "esp:34", "green", [] ],
+    [ "pot_sound:GND", "esp:GND.2", "black", [] ],
+    [ "pot_sound:VCC", "esp:3V3", "red", [] ],
+    [ "pot_sound:SIG", "esp:35", "yellow", [] ]
+  ],
+  "dependencies": {}
+}

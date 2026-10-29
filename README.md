@@ -42,3 +42,26 @@ System Architecture
                  RGB LED (GPIO25)   Buzzer (GPIO33)   Vibration motor
                  blue/orange/red    after ~2.5 s      (GPIO32 → transistor)
                                     sustained DISTRESS
+
+
+## Frontend Options
+
+This project includes multiple frontend implementations:
+
+### 1. Web Dashboard (Original)
+- Location: `dashboard/index.html`
+- Pure HTML/CSS/JavaScript, no build required
+- Supports Web Serial API for direct ESP32 connection
+- Demo mode included
+
+### 2. Python Streamlit Dashboard (New)
+- Location: `python_dashboard/app.py`
+- Install dependencies: `pip install -r python_dashboard/requirements.txt`
+- Run: `streamlit run python_dashboard/app.py`
+- Features real-time plotting with Plotly, serial port support, demo mode
+
+### 3. Wokwi Simulation (New)
+- Location: `wokwi/`
+- Simulate the circuit online at [wokwi.com](https://wokwi.com)
+- Includes `diagram.json` and `wokwi.toml` configuration files
+- Use potentiometers to simulate GSR and Sound sensor inputs

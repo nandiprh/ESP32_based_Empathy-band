@@ -151,3 +151,27 @@ Embedded CSS uses variables, grid layout, soft shadows, canvas styling. Monospac
 
 ### 2.12 No backend server required
 Pure static HTML/JS; runs from `file://` for demo, or served over HTTP(S) for Web Serial (works well from local filesystem in modern browsers with user gesture, and best over localhost).
+
+
+## 9. Frontend Implementations
+
+### 9.1 Original HTML Dashboard (`dashboard/index.html`)
+- Web Serial API integration for live ESP32 data
+- Real-time visualization with Canvas
+- Demo mode with synthetic data generation
+- Matches firmware classification logic exactly
+
+### 9.2 Python Streamlit Dashboard (`python_dashboard/app.py`) - **NEW**
+- Full-featured Python dashboard using Streamlit and Plotly
+- Real-time plotting and visualization
+- Serial port connectivity via pyserial
+- Demo mode with simulated distress episodes
+- Session tracking, event logging, and statistics
+- Clean, responsive UI with custom styling
+
+### 9.3 Wokwi Simulation (`wokwi/`) - **NEW**
+- Online circuit simulation on wokwi.com
+- Pre-configured diagram with ESP32, LEDs, buzzer, button
+- Potentiometers simulate analog sensor inputs (GSR on GPIO34, Sound on GPIO35)
+- Supports serial monitoring at 115200 baud
+- Great for testing without physical hardware

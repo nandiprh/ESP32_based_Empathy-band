@@ -297,7 +297,7 @@ const CFG = {
   SOUND_SUSTAIN_MS: 1000,
   MOTION_STILL: 0.12,
   DISTRESS_MIN: 3,
-  ALERT_DELAY_MS: 2500
+  ALERT_DELAY_MS: 0
 };
 
 const COLORS = { CALM: '#2f9cf4', ANXIOUS: '#f5a623', DISTRESS: '#ef4444' };
@@ -418,11 +418,13 @@ function tick(dtMs, inp, opts) {
   state.timeIn[s] += dtMs;
 
   if (s === 'DISTRESS') {
-    if (state.distressSince == null) { state.distressSince = state.sessionMs; state.alertFired = false; }
-    else if (!state.alertFired && state.sessionMs - state.distressSince >= CFG.ALERT_DELAY_MS) {
-      state.alertFired = true;
-      state.alerts++;
-      addEvent('DISTRESS', 'Alert fired (buzzer + vibration)', state.sessionMs);
+    if (state.distressSince == null) { 
+      state.distressSince = state.sessionMs; 
+      if (!state.alertFired) {
+        state.alertFired = true;
+        state.alerts++;
+        addEvent('DISTRESS', 'Alert fired (buzzer + vibration)', state.sessionMs);
+      }
     }
   } else {
     state.distressSince = null;

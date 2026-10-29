@@ -49,3 +49,8 @@
 #define RGB_DISTRESS_R 80
 #define RGB_DISTRESS_G 0
 #define RGB_DISTRESS_B 0
+
+
+// RGB LED configuration
+// Set to 1 if using common anode RGB LED, 0 for common cathode
+#define RGB_COMMON_ANODE 1
